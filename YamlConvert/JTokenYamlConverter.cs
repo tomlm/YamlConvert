@@ -19,10 +19,7 @@ namespace YamlConvert
 
         public object ReadYaml(IParser parser, Type type)
         {
-            while (parser.Accept<Comment>(out var comment))
-            {
-                parser.Consume<Comment>();
-            }
+            ReadComments(parser);
 
             if (type == typeof(JValue) || (type == typeof(JToken) && parser.Accept<Scalar>(out var scalar)))
             {
@@ -87,19 +84,13 @@ namespace YamlConvert
 
         private object ReadObject(IParser parser)
         {
-            while (parser.Accept<Comment>(out var comment))
-            {
-                parser.Consume<Comment>();
-            }
+            ReadComments(parser);
 
             JObject value = new JObject();
             parser.Consume<MappingStart>();
             while (!parser.Accept<MappingEnd>(out var end))
             {
-                while (parser.Accept<Comment>(out var comment))
-                {
-                    parser.Consume<Comment>();
-                }
+                ReadComments(parser);
                 var name = parser.Consume<Scalar>();
                 if (parser.Accept<Scalar>(out var scalar))
                 {
@@ -120,14 +111,13 @@ namespace YamlConvert
 
         private object ReadArray(IParser parser)
         {
-            if (parser.Accept<Comment>(out var comment))
-            {
-                parser.Consume<Comment>();
-            }
+            ReadComments(parser);
             JArray jar = new JArray();
             parser.Consume<SequenceStart>();
             while (!parser.Accept<SequenceEnd>(out var end))
             {
+                ReadComments(parser);
+
                 if (parser.Accept<Scalar>(out var scalar))
                 {
                     jar.Add((JValue)ReadYaml(parser, typeof(JValue)));
@@ -140,21 +130,25 @@ namespace YamlConvert
                 {
                     jar.Add((JArray)ReadYaml(parser, typeof(JArray)));
                 }
-                else if (parser.Accept<Comment>(out comment))
-                {
-                    parser.Consume<Comment>();
-                }
             }
             parser.Consume<SequenceEnd>();
             return jar;
         }
 
+        private static void ReadComments(IParser parser)
+        {
+            while (parser.Accept<Comment>(out var comment))
+            {
+                parser.Consume<Comment>();
+            }
+        }
         private static void WriteValue(IEmitter emitter, object value)
         {
             JValue jVal = (JValue)value;
             switch (jVal.Type)
             {
                 case JTokenType.Comment:
+                    emitter.Emit(new YamlDotNet.Core.Events.Comment(jVal.Value.ToString(), false));
                     break;
                 case JTokenType.None:
                     break;

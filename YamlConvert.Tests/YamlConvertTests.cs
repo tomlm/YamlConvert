@@ -104,6 +104,7 @@ namespace YamlConvert.Tests
             yield return new object[] { new JArray() { 1, 2, 3, 4, 5 } };
             yield return new object[] { new JArray() { "a", "b", "c", "d" } };
             yield return new object[] { new JArray() { 1, 2, 3, "a", "b", "c" } };
+            yield return new object[] { new JArray() { new JObject() { { "foo", 15 } }, new JObject() { { "foo", 99 } }, new JObject() { { "foo", 22 } } } };
         }
 
         [Theory]
@@ -116,7 +117,7 @@ namespace YamlConvert.Tests
             var jar2 = (JArray)YamlConvert.DeserializeObject(yaml);
             for (int i = 0; i < jar.Count; i++)
             {
-                Assert.Equal(jar[i], jar2[i]);
+                Assert.True(JToken.DeepEquals(jar[i], jar2[i]));
             }
         }
 
