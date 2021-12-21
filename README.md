@@ -12,7 +12,7 @@ honors the JSON.NET attributes you have painstakingly created.
 ```nuget install YamlConvert```
 
 ## YamlConvert
-* **YamlConvert** - exposes SerializeObject() and DeserializeObject() methods which work just like JsonConvert, but with YAML
+**YamlConvert** - exposes SerializeObject() and DeserializeObject() methods which work just like JsonConvert, but with YAML
 
 ```
 // to serialize to yaml
