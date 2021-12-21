@@ -2,9 +2,27 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
+	<Version>1.0.0</Version>
+	<AssemblyVersion>1.0.0.0</AssemblyVersion>
+	<Description>YamlDotNet Extentension library for JSON.NET objects and annotations.</Description>
+	<Company>Icicilecreek</Company>
+	<Authors>Tom Laird-McConnell</Authors>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageProjectUrl>https://github.com/tomlm/yamlconvert</PackageProjectUrl>
+	<PackageIconUrl>https://raw.githubusercontent.com/tomlm/yamlconvert/icon.png</PackageIconUrl>
+	<PackageIcon>icon.png</PackageIcon>
+	<RepositoryType>git</RepositoryType>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<RepositoryUrl>https://github.com/tomlm/lucy</RepositoryUrl>
+	<Copyright>Tom Laird-McConnell 2021</Copyright>
+	<ContentTargetFolders>content</ContentTargetFolders>
+	</PropertyGroup>
 
-  <ItemGroup>
+	<ItemGroup>
+		<None Include="icon.png" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="YamlDotNet" Version="11.2.1" />
   </ItemGroup>
