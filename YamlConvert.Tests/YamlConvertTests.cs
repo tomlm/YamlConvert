@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace YamlConvert.Tests
+namespace YamlConverter.Tests
 {
     public class YamlConvertTests
     {
@@ -88,8 +88,9 @@ namespace YamlConvert.Tests
             obj.z2.c = "true";
 
             var yaml = YamlConvert.SerializeObject(obj);
+            Assert.DoesNotContain("null", yaml);
             dynamic obj2 = YamlConvert.DeserializeObject(yaml);
-            Assert.Equal(obj.n, obj2.n);
+            Assert.Null(obj2.n);
             Assert.Equal(obj.w, obj2.w);
             Assert.Equal(obj.x, obj2.x);
             Assert.Equal(obj.y, obj2.y);
@@ -105,6 +106,7 @@ namespace YamlConvert.Tests
             yield return new object[] { new JArray() { "a", "b", "c", "d" } };
             yield return new object[] { new JArray() { 1, 2, 3, "a", "b", "c" } };
             yield return new object[] { new JArray() { new JObject() { { "foo", 15 } }, new JObject() { { "foo", 99 } }, new JObject() { { "foo", 22 } } } };
+            yield return new object[] { new JArray() { null, 2 } };
         }
 
         [Theory]

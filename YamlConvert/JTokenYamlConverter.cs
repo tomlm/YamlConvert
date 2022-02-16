@@ -5,7 +5,7 @@ using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 
-namespace YamlConvert
+namespace YamlConverter
 {
     /// <summary>
     /// YamlDotNet TypeConverter for JTokens (JValue/JObject/JArray)
@@ -195,9 +195,12 @@ namespace YamlConvert
             JObject obj = (JObject)value;
             foreach (var property in obj.Properties())
             {
-                emitter.Emit(new Scalar(null, property.Name));
                 var propVal = JToken.FromObject(property.Value);
-                WriteYaml(emitter, propVal, propVal.GetType());
+                if (propVal.Type != JTokenType.Null)
+                {
+                    emitter.Emit(new Scalar(null, property.Name));
+                    WriteYaml(emitter, propVal, propVal.GetType());
+                }
             }
 
             emitter.Emit(new MappingEnd());

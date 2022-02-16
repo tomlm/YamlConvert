@@ -2,7 +2,7 @@
 using System;
 using YamlDotNet.Serialization;
 
-namespace YamlConvert
+namespace YamlConverter
 {
     public static class YamlConvert
     {
