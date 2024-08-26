@@ -17,42 +17,42 @@ namespace YamlConverter
             return type == typeof(JToken) || type == typeof(JObject) || type == typeof(JValue) || type == typeof(JArray);
         }
 
-        public object ReadYaml(IParser parser, Type type)
+        public object ReadYaml(IParser parser, Type type, ObjectDeserializer rootDeserializer)
         {
-            ReadComments(parser);
+            ReadComments(parser, rootDeserializer);
 
             if (type == typeof(JValue) || (type == typeof(JToken) && parser.Accept<Scalar>(out var scalar)))
             {
-                return ReadValue(parser);
+                return ReadValue(parser, rootDeserializer);
             }
             else if (type == typeof(JObject) || (type == typeof(JToken) && parser.Accept<MappingStart>(out var map)))
             {
-                return ReadObject(parser);
+                return ReadObject(parser, rootDeserializer);
             }
             else if (type == typeof(JArray) || (type == typeof(JToken) && parser.Accept<SequenceStart>(out var seq)))
             {
-                return ReadArray(parser);
+                return ReadArray(parser, rootDeserializer);
             }
             return null;
         }
 
-        public void WriteYaml(IEmitter emitter, object value, Type type)
+        public void WriteYaml(IEmitter emitter, object value, Type type, ObjectSerializer serializer)
         {
             if (type == typeof(JValue))
             {
-                WriteValue(emitter, value);
+                WriteValue(emitter, value, serializer);
             }
             else if (type == typeof(JObject))
             {
-                WriteObject(emitter, value);
+                WriteObject(emitter, value, serializer);
             }
             else if (type == typeof(JArray))
             {
-                WriteArray(emitter, value);
+                WriteArray(emitter, value, serializer);
             }
         }
 
-        private static object ReadValue(IParser parser)
+        private static object ReadValue(IParser parser, ObjectDeserializer rootDeserializer)
         {
             while (parser.Accept<Comment>(out var comment))
             {
@@ -82,67 +82,67 @@ namespace YamlConverter
             return JValue.FromObject(scalar.Value);
         }
 
-        private object ReadObject(IParser parser)
+        private object ReadObject(IParser parser, ObjectDeserializer rootDeserializer)
         {
-            ReadComments(parser);
+            ReadComments(parser, rootDeserializer);
 
             JObject value = new JObject();
             parser.Consume<MappingStart>();
             while (!parser.Accept<MappingEnd>(out var end))
             {
-                ReadComments(parser);
+                ReadComments(parser, rootDeserializer);
                 var name = parser.Consume<Scalar>();
                 if (parser.Accept<Scalar>(out var scalar))
                 {
-                    value[name.Value] = (JToken)ReadYaml(parser, typeof(JValue));
+                    value[name.Value] = (JToken)ReadYaml(parser, typeof(JValue), rootDeserializer);
                 }
                 else if (parser.Accept<MappingStart>(out var mapStart))
                 {
-                    value[name.Value] = (JObject)ReadYaml(parser, typeof(JObject));
+                    value[name.Value] = (JObject)ReadYaml(parser, typeof(JObject), rootDeserializer);
                 }
                 else if (parser.Accept<SequenceStart>(out var seqStart))
                 {
-                    value[name.Value] = (JArray)ReadYaml(parser, typeof(JArray));
+                    value[name.Value] = (JArray)ReadYaml(parser, typeof(JArray), rootDeserializer);
                 }
             }
             parser.Consume<MappingEnd>();
             return value;
         }
 
-        private object ReadArray(IParser parser)
+        private object ReadArray(IParser parser, ObjectDeserializer rootDeserializer)
         {
-            ReadComments(parser);
+            ReadComments(parser, rootDeserializer);
             JArray jar = new JArray();
             parser.Consume<SequenceStart>();
             while (!parser.Accept<SequenceEnd>(out var end))
             {
-                ReadComments(parser);
+                ReadComments(parser, rootDeserializer);
 
                 if (parser.Accept<Scalar>(out var scalar))
                 {
-                    jar.Add((JValue)ReadYaml(parser, typeof(JValue)));
+                    jar.Add((JValue)ReadYaml(parser, typeof(JValue), rootDeserializer));
                 }
                 else if (parser.Accept<MappingStart>(out var mapStart))
                 {
-                    jar.Add((JObject)ReadYaml(parser, typeof(JObject)));
+                    jar.Add((JObject)ReadYaml(parser, typeof(JObject), rootDeserializer));
                 }
                 else if (parser.Accept<SequenceStart>(out var seqStart))
                 {
-                    jar.Add((JArray)ReadYaml(parser, typeof(JArray)));
+                    jar.Add((JArray)ReadYaml(parser, typeof(JArray), rootDeserializer));
                 }
             }
             parser.Consume<SequenceEnd>();
             return jar;
         }
 
-        private static void ReadComments(IParser parser)
+        private static void ReadComments(IParser parser, ObjectDeserializer rootDeserializer)
         {
             while (parser.Accept<Comment>(out var comment))
             {
                 parser.Consume<Comment>();
             }
         }
-        private static void WriteValue(IEmitter emitter, object value)
+        private static void WriteValue(IEmitter emitter, object value, ObjectSerializer serializer)
         {
             JValue jVal = (JValue)value;
             switch (jVal.Type)
@@ -188,7 +188,7 @@ namespace YamlConverter
             }
         }
 
-        private void WriteObject(IEmitter emitter, object value)
+        private void WriteObject(IEmitter emitter, object value, ObjectSerializer serializer)
         {
             emitter.Emit(new MappingStart(null, null, false, MappingStyle.Any));
 
@@ -199,14 +199,14 @@ namespace YamlConverter
                 if (propVal.Type != JTokenType.Null)
                 {
                     emitter.Emit(new Scalar(null, property.Name));
-                    WriteYaml(emitter, propVal, propVal.GetType());
+                    WriteYaml(emitter, propVal, propVal.GetType(), serializer);
                 }
             }
 
             emitter.Emit(new MappingEnd());
         }
 
-        private void WriteArray(IEmitter emitter, object value)
+        private void WriteArray(IEmitter emitter, object value, ObjectSerializer serializer)
         {
             JArray jar = (JArray)value;
 
@@ -218,7 +218,7 @@ namespace YamlConverter
 
             foreach (var item in jar)
             {
-                WriteYaml(emitter, item, item.GetType());
+                WriteYaml(emitter, item, item.GetType(), serializer);
             }
 
             emitter.Emit(new SequenceEnd());
