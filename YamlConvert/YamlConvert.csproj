@@ -14,7 +14,7 @@
 		<PackageIcon>icon.png</PackageIcon>
 		<RepositoryType>git</RepositoryType>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<RepositoryUrl>https://github.com/tomlm/lucy</RepositoryUrl>
+		<RepositoryUrl>https://github.com/tomlm/yamlconvert</RepositoryUrl>
 		<Copyright>Tom Laird-McConnell 2021</Copyright>
 		<ContentTargetFolders>content</ContentTargetFolders>
 	</PropertyGroup>
