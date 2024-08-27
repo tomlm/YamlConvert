@@ -15,20 +15,20 @@ jobs:
       - name: Checkout 
         uses: actions/checkout@v4
         with:
-          path: Crazor
+          path: YamlConvert
   
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0.x
   
-      - name: Bump build version
-        id: bump
-        uses: vers-one/dotnet-project-version-updater@v1.5
-        with:
-          files: |
-            "**/libraries/**/YamlConvert.csproj"
-          version: bump-build
+      # - name: Bump build version
+      #   id: bump
+      #   uses: vers-one/dotnet-project-version-updater@v1.5
+      #   with:
+      #     files: |
+      #       "**/libraries/**/YamlConvert.csproj"
+      #     version: bump-build
   
       - name: Restore dependencies
         run: dotnet restore YamlConvert/YamlConvert.sln
@@ -40,18 +40,18 @@ jobs:
         run: |
           dotnet pack --no-build ./YamlConvert/YamlConvert.sln -c Debug -o packages --include-symbols --property WarningLevel=0
 
-      - name: Publish NuGet and symbols
-        id: nuget-push
-        uses: edumserrano/nuget-push@v1
-        with:
-          api-key: '${{ secrets.NUGET_KEY }}' 
-          working-directory: 'packages'
-          fail-if-exists: false
+      # - name: Publish NuGet and symbols
+      #   id: nuget-push
+      #   uses: edumserrano/nuget-push@v1
+      #   with:
+      #     api-key: '${{ secrets.NUGET_KEY }}' 
+      #     working-directory: 'packages'
+      #     fail-if-exists: false
         
-      - name: Commit new version changes
-        working-directory: ./YamlConvert
-        run: |
-          git config --global user.name "Github Action"
-          git config --global user.email "tomlm@users.noreply.github.com"
-          git commit -a -m "Bumped version for published nuget artifacts"
-          git push
+      # - name: Commit new version changes
+      #   working-directory: ./YamlConvert
+      #   run: |
+      #     git config --global user.name "Github Action"
+      #     git config --global user.email "tomlm@users.noreply.github.com"
+      #     git commit -a -m "Bumped version for published nuget artifacts"
+      #     git push
