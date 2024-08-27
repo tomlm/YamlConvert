@@ -196,11 +196,8 @@ namespace YamlConverter
             foreach (var property in obj.Properties())
             {
                 var propVal = JToken.FromObject(property.Value);
-                if (propVal.Type != JTokenType.Null)
-                {
-                    emitter.Emit(new Scalar(null, property.Name));
-                    WriteYaml(emitter, propVal, propVal.GetType(), serializer);
-                }
+                emitter.Emit(new Scalar(null, property.Name));
+                WriteYaml(emitter, propVal, propVal.GetType(), serializer);
             }
 
             emitter.Emit(new MappingEnd());

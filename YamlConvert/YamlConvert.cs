@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using YamlDotNet.Serialization;
 
@@ -9,7 +10,6 @@ namespace YamlConverter
         /// <summary>Deefault serializer used if none is passed at call time</summary>
         public static ISerializer DefaultSerializer = new SerializerBuilder()
                 .DisableAliases()
-                .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull | DefaultValuesHandling.OmitDefaults)
                 .WithTypeConverter(new JTokenYamlConverter())
                 .Build();
 
@@ -28,6 +28,17 @@ namespace YamlConverter
             return serializer.Serialize(JToken.FromObject(value));
         }
 
+        /// <summary>Serialize Object as YAML honoring Json.NET attributes</summary>
+        /// <param name="value">object</param>
+        /// <param name="jsonSerializer">JsonSerializer to use for controlling how to serialize JSON objects</param>
+        /// <param name="serializer">optional serializer</param>
+        /// <returns>yaml string</returns>
+        public static string SerializeObject(object value, JsonSerializerSettings jsonSettings,  ISerializer serializer = null)
+        {
+            serializer = serializer ?? DefaultSerializer;
+            return serializer.Serialize(JToken.FromObject(value, JsonSerializer.Create(jsonSettings)));
+        }
+
         /// <summary>Deserialize YAML to object via JToken honoring Json.NET attributes</summary>
         /// <param name="yaml">yaml</param>
         /// <param name="deserializer">optional deserializer</param>
@@ -35,6 +46,15 @@ namespace YamlConverter
         public static object DeserializeObject(string yaml, IDeserializer deserializer = null)
         {
             return DeserializeObject<JToken>(yaml, deserializer);
+        }
+
+        /// <summary>Deserialize YAML to object via JToken honoring Json.NET attributes</summary>
+        /// <param name="yaml">yaml</param>
+        /// <param name="deserializer">optional deserializer</param>
+        /// <returns>jtoken</returns>
+        public static object DeserializeObject(string yaml, JsonSerializerSettings jsonSettings, IDeserializer deserializer = null)
+        {
+            return DeserializeObject<JToken>(yaml, jsonSettings, deserializer);
         }
 
         /// <summary>
@@ -48,6 +68,20 @@ namespace YamlConverter
         {
             deserializer = deserializer ?? DefaultDeserializer;
             return deserializer.Deserialize<JToken>(yaml).ToObject<T>();
+        }
+
+        /// <summary>
+        /// <summary>Deserialize YAML to object<T> honoring Json.NET attributes</summary>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="yaml">yaml</param>
+        /// <param name="deserializer">optional deserializer</param>
+        /// <returns>T</returns>
+        public static T DeserializeObject<T>(string yaml, JsonSerializerSettings jsonSettings, IDeserializer deserializer = null)
+        {
+            deserializer = deserializer ?? DefaultDeserializer;
+
+            return deserializer.Deserialize<JToken>(yaml).ToObject<T>(JsonSerializer.Create(jsonSettings));
         }
 
         /// <summary>

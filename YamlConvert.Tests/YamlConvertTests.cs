@@ -1,8 +1,10 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using Xunit;
+using YamlDotNet.Serialization;
 
 namespace YamlConverter.Tests
 {
@@ -88,9 +90,9 @@ namespace YamlConverter.Tests
             obj.z2.c = "true";
 
             var yaml = YamlConvert.SerializeObject(obj);
-            Assert.DoesNotContain("null", yaml);
             dynamic obj2 = YamlConvert.DeserializeObject(yaml);
-            Assert.Null(obj2.n);
+            Assert.True(obj2.n == null);
+            Assert.Equal(obj.n, obj2.n);
             Assert.Equal(obj.w, obj2.w);
             Assert.Equal(obj.x, obj2.x);
             Assert.Equal(obj.y, obj2.y);
@@ -153,21 +155,109 @@ namespace YamlConverter.Tests
                 MyText = "text",
                 Bar = "blat",
                 Ignored = true,
-                Data = obj
+                Data = obj,
+                Nulled = null
             };
 
             testData.AdditionalProperties["foo"] = obj;
 
             var yaml = YamlConvert.SerializeObject(testData);
+            Assert.DoesNotContain("null", yaml);
             var testData2 = YamlConvert.DeserializeObject<TestData>(yaml);
             Assert.Equal(testData.MyText, testData2.MyText);
             Assert.Equal(testData.MyFloat, testData2.MyFloat);
             Assert.Equal(testData.MyInteger, testData2.MyInteger);
             Assert.Equal(testData.MyBool, testData2.MyBool);
             Assert.Equal(testData.Bar, testData2.Bar);
+            Assert.Equal(testData.Nulled, testData2.Nulled);
             Assert.NotEqual(testData.Ignored, testData2.Ignored);
             Assert.True(JToken.DeepEquals(obj, (JToken)testData2.Data));
             Assert.True(JToken.DeepEquals(obj, (JToken)testData2.AdditionalProperties["foo"]));
+        }
+
+        [Fact]
+        public void JsonSerializerTest_Dynamic()
+        {
+            var contractResolver = new DefaultContractResolver
+            {
+                NamingStrategy = new SnakeCaseNamingStrategy()
+            };
+            var jsonSettings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                ContractResolver = contractResolver
+            };
+
+            dynamic obj = new
+            {
+                ThisIsATest = "test",
+            };
+
+            var yaml = YamlConvert.SerializeObject(obj, jsonSettings);
+            Assert.Equal("this_is_a_test: test", yaml.Trim());
+        }
+
+        [Fact]
+        public void JsonSerializerTest_Typed()
+        {
+            var jsonSettings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                ContractResolver = new DefaultContractResolver { NamingStrategy = new SnakeCaseNamingStrategy() }
+            };
+
+            var testData = new TestData()
+            {
+                MyFloat = 1.55f,
+                MyInteger = 15,
+                MyBool = true,
+                MyText = "text",
+                Bar = "blat",
+                Ignored = true,
+                Data = null
+            };
+
+            var yaml = YamlConvert.SerializeObject(testData, jsonSettings);
+            Assert.Contains("my_text:", yaml);
+            Assert.Contains("myBool:", yaml);
+            Assert.DoesNotContain("data:", yaml);
+            var testData2 = YamlConvert.DeserializeObject<TestData>(yaml, jsonSettings);
+            Assert.Equal(testData.MyText, testData2.MyText);
+            Assert.Equal(testData.MyFloat, testData2.MyFloat);
+            Assert.Equal(testData.MyInteger, testData2.MyInteger);
+            Assert.Equal(testData.MyBool, testData2.MyBool);
+            Assert.Equal(testData.Bar, testData2.Bar);
+            Assert.Equal(testData.Nulled, testData2.Nulled);
+            Assert.NotEqual(testData.Ignored, testData2.Ignored);
+        }
+
+        [Fact]
+        public void TestIgnoreDefaults()
+        {
+            var testData = new TestDataDefaults();
+            var yaml = YamlConvert.SerializeObject(testData);
+            Assert.Equal("{}", yaml.Trim());
+            var testData2 = YamlConvert.DeserializeObject<TestDataDefaults>(yaml);
+            Assert.Equal(testData.MyText, testData2.MyText);
+            Assert.Equal(testData.MyBool, testData2.MyBool);
+            Assert.Equal(JsonConvert.SerializeObject(testData.MyObject), JsonConvert.SerializeObject(testData2.MyObject));
+            Assert.Equal(testData.MyBool, testData2.MyBool);
+            Assert.Equal(testData.MyFloat, testData2.MyFloat);
+            Assert.Equal(testData.MyInteger, testData2.MyInteger);
+            testData.MyText = "MyText";
+            testData.MyInteger = 1;
+            testData.MyBool = true;
+            testData.MyFloat = 1.0f;
+            testData.MyObject = new { x = 15 };
+            yaml = YamlConvert.SerializeObject(testData);
+            testData2 = YamlConvert.DeserializeObject<TestDataDefaults>(yaml);
+
+            Assert.Equal(testData.MyText, testData2.MyText);
+            Assert.Equal(testData.MyBool, testData2.MyBool);
+            Assert.Equal(testData.MyBool, testData2.MyBool);
+            Assert.Equal(testData.MyFloat, testData2.MyFloat);
+            Assert.Equal(testData.MyInteger, testData2.MyInteger);
+            Assert.Equal(JsonConvert.SerializeObject(testData.MyObject), JsonConvert.SerializeObject(testData2.MyObject));
         }
     }
 
@@ -193,7 +283,28 @@ namespace YamlConverter.Tests
         [JsonProperty("data")]
         public object Data { get; set; }
 
+        [JsonProperty("nulled", DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public object Nulled { get; set; }
+
         [JsonExtensionData()]
         public Dictionary<string, object> AdditionalProperties = new Dictionary<string, object>();
+    }
+
+    public class TestDataDefaults
+    {
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public string MyText { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public int MyInteger { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public float MyFloat { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public bool MyBool { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public object MyObject { get; set; }
     }
 }
