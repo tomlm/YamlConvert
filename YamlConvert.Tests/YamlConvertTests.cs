@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 using YamlDotNet.Serialization;
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 
 namespace YamlConverter.Tests
 {
@@ -73,6 +74,21 @@ namespace YamlConverter.Tests
             var yaml = YamlConvert.SerializeObject(val);
             var val2 = YamlConvert.DeserializeObject<bool>(yaml);
             Assert.Equal(val, val2);
+        }
+
+        [Fact]
+        public void EmptyYamlTests()
+        {
+            Assert.Null(YamlConvert.DeserializeObject<string>(""));
+            Assert.Null(YamlConvert.DeserializeObject<string?>(""));
+            Assert.Equal(0, YamlConvert.DeserializeObject<int>(""));
+            Assert.Null(YamlConvert.DeserializeObject<int?>(""));
+            Assert.Null(YamlConvert.DeserializeObject<TestData>(""));
+            Assert.Null(YamlConvert.DeserializeObject<TestData?>(""));
+            Assert.Null(YamlConvert.DeserializeObject<JObject>(""));
+            Assert.Null(YamlConvert.DeserializeObject<JArray>(""));
+            Assert.Null(YamlConvert.DeserializeObject<JToken>(""));
+            Assert.Null(YamlConvert.DeserializeObject(""));
         }
 
         [Fact]
@@ -260,6 +276,7 @@ namespace YamlConverter.Tests
             Assert.Equal(JsonConvert.SerializeObject(testData.MyObject), JsonConvert.SerializeObject(testData2.MyObject));
         }
     }
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
     public class TestData
     {

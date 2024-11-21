@@ -33,7 +33,7 @@ namespace YamlConverter
         /// <param name="jsonSerializer">JsonSerializer to use for controlling how to serialize JSON objects</param>
         /// <param name="serializer">optional serializer</param>
         /// <returns>yaml string</returns>
-        public static string SerializeObject(object value, JsonSerializerSettings jsonSettings,  ISerializer serializer = null)
+        public static string SerializeObject(object value, JsonSerializerSettings jsonSettings, ISerializer serializer = null)
         {
             serializer = serializer ?? DefaultSerializer;
             return serializer.Serialize(JToken.FromObject(value, JsonSerializer.Create(jsonSettings)));
@@ -67,7 +67,10 @@ namespace YamlConverter
         public static T DeserializeObject<T>(string yaml, IDeserializer deserializer = null)
         {
             deserializer = deserializer ?? DefaultDeserializer;
-            return deserializer.Deserialize<JToken>(yaml).ToObject<T>();
+            var token = deserializer.Deserialize<JToken>(yaml);
+            if (token != null)
+                return token.ToObject<T>();
+            return default;
         }
 
         /// <summary>
@@ -81,7 +84,10 @@ namespace YamlConverter
         {
             deserializer = deserializer ?? DefaultDeserializer;
 
-            return deserializer.Deserialize<JToken>(yaml).ToObject<T>(JsonSerializer.Create(jsonSettings));
+            var token = deserializer.Deserialize<JToken>(yaml);
+            if (token != null)
+                return token.ToObject<T>(JsonSerializer.Create(jsonSettings));
+            return default;
         }
 
         /// <summary>
@@ -95,7 +101,10 @@ namespace YamlConverter
         public static object DeserializeObject(string yaml, Type type, IDeserializer deserializer = null)
         {
             deserializer = deserializer ?? DefaultDeserializer;
-            return deserializer.Deserialize<JToken>(yaml).ToObject(type);
+            var token = deserializer.Deserialize<JToken>(yaml);
+            if (token != null)
+                return token.ToObject(type);
+            return default;
         }
 
     }
